@@ -20,5 +20,10 @@ pad_value: 0.0
 # persisted with the checkpoint so inference de-normalises identically.
 standardize_targets: true
 
+# Bootstrap 7d/30d/virality targets from a single snapshot via the documented
+# saturating view-growth heuristic (app.dataset.targets). Set false when you
+# have real longitudinal snapshots and only want exactly-observed labels.
+approximate_view_curve: true
+
 # Metadata features fed alongside the brain latent (see app.dataset.features).
 use_metadata_features: true
