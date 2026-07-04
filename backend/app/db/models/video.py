@@ -10,7 +10,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, Float, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import JSON, BigInteger, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -56,6 +56,7 @@ class Video(Base, TimestampMixin):
     video_path: Mapped[str | None] = mapped_column(String(512), default=None)
     audio_path: Mapped[str | None] = mapped_column(String(512), default=None)
     thumbnail_path: Mapped[str | None] = mapped_column(String(512), default=None)
+    subtitle_path: Mapped[str | None] = mapped_column(String(512), default=None)
     frames_dir: Mapped[str | None] = mapped_column(String(512), default=None)
     transcript: Mapped[str | None] = mapped_column(Text, default=None)
 
@@ -63,6 +64,8 @@ class Video(Base, TimestampMixin):
     status: Mapped[VideoStatus] = mapped_column(String(16), default=VideoStatus.pending)
     brain_status: Mapped[BrainStatus] = mapped_column(String(16), default=BrainStatus.absent)
     error: Mapped[str | None] = mapped_column(Text, default=None)
+    # Full asset-validation outcome (checks + reasons). See app.dataset.validation.
+    validation: Mapped[dict | None] = mapped_column(JSON, default=None)
 
     # ---- Relationships ----
     owner: Mapped[User | None] = relationship(back_populates="videos")

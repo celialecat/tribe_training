@@ -17,8 +17,10 @@ class VideoStatus(StrEnum):
     downloading = "downloading"
     downloaded = "downloaded"
     extracting = "extracting"
-    ready = "ready"          # media + metadata present, ready for TRIBE
-    failed = "failed"
+    validating = "validating"
+    ready = "ready"          # media + metadata present, VALIDATED, ready for TRIBE
+    failed = "failed"        # download / pipeline error (no usable file produced)
+    rejected = "rejected"    # file produced but failed asset validation (corrupt/incomplete)
 
 
 class BrainStatus(StrEnum):

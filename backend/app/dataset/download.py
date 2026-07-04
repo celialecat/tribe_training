@@ -9,6 +9,7 @@ a :class:`VideoMetadata`.
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,16 @@ from app.core.logging import get_logger
 from app.dataset.schemas import VideoMetadata
 
 logger = get_logger(__name__)
+
+
+@dataclass(slots=True)
+class DownloadResult:
+    """Filesystem locations produced by a single video download."""
+
+    metadata: VideoMetadata
+    video_path: Path
+    thumbnail_path: Path | None = None
+    subtitle_path: Path | None = None
 
 # Accepts standard watch URLs, youtu.be short links, shorts and embeds.
 _YOUTUBE_ID_RE = re.compile(
@@ -87,11 +98,64 @@ class YouTubeDownloader:
             info = ydl.extract_info(url, download=False)
         return info_to_metadata(info)
 
-    def download(self, url: str) -> tuple[VideoMetadata, Path, Path | None]:
-        """Download the video + thumbnail.
+    def expand_source(self, url: str) -> list[str]:
+        """Expand a playlist/channel URL into individual video watch URLs.
 
-        Returns ``(metadata, video_path, thumbnail_path)``. Files are written
-        under ``output_root/<youtube_id>/``.
+        Uses yt-dlp's flat extraction (no per-video network calls), so a channel
+        with thousands of videos is enumerated cheaply. A plain video URL is
+        returned unchanged as a single-element list.
+        """
+        options = {
+            "quiet": True,
+            "no_warnings": True,
+            "extract_flat": "in_playlist",
+            "skip_download": True,
+        }
+        with self._ydl(options) as ydl:
+            info = ydl.extract_info(url, download=False)
+
+        entries = info.get("entries") if isinstance(info, dict) else None
+        if not entries:
+            return [url]  # a single video
+
+        urls: list[str] = []
+        for entry in entries:
+            if not entry:
+                continue
+            # Nested playlists (e.g. a channel's tabs) recurse one level.
+            if entry.get("entries"):
+                urls.extend(self._entry_urls(entry["entries"]))
+            else:
+                urls.extend(self._entry_urls([entry]))
+        # De-duplicate while preserving order.
+        seen: set[str] = set()
+        unique = [u for u in urls if not (u in seen or seen.add(u))]
+        logger.info("Expanded %s into %d video URL(s)", url, len(unique))
+        return unique
+
+    @staticmethod
+    def _entry_urls(entries: list[dict[str, Any]]) -> list[str]:
+        urls: list[str] = []
+        for entry in entries:
+            if not entry:
+                continue
+            if entry.get("url") and entry.get("ie_key") == "Youtube":
+                urls.append(f"https://www.youtube.com/watch?v={entry['url']}")
+            elif entry.get("id"):
+                urls.append(f"https://www.youtube.com/watch?v={entry['id']}")
+            elif entry.get("webpage_url"):
+                urls.append(entry["webpage_url"])
+        return urls
+
+    def download(
+        self, url: str, *, subtitle_langs: tuple[str, ...] = ("en", "en-US")
+    ) -> DownloadResult:
+        """Download the video + thumbnail + subtitles (resumable, deduped).
+
+        Files are written under ``output_root/<youtube_id>/``. Downloads are
+        resumable (``continuedl``): a re-run picks up partial ``.part`` files
+        rather than starting over. Both manual and auto-generated subtitles are
+        fetched when available.
         """
         video_id = extract_youtube_id(url) or "local"
         dest = self.output_root / video_id
@@ -105,7 +169,17 @@ class YouTubeDownloader:
             # and dramatically cheaper to download and decode.
             "format": "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]/best",
             "merge_output_format": "mp4",
+            # Resumable downloads + skip already-complete files.
+            "continuedl": True,
+            "retries": 5,
+            "fragment_retries": 5,
+            # Thumbnails.
             "writethumbnail": True,
+            # Subtitles: manual first, fall back to auto-generated captions.
+            "writesubtitles": True,
+            "writeautomaticsub": True,
+            "subtitleslangs": list(subtitle_langs),
+            "subtitlesformat": "vtt/srt/best",
             "postprocessors": [
                 {"key": "FFmpegThumbnailsConvertor", "format": "jpg"},
             ],
@@ -117,10 +191,16 @@ class YouTubeDownloader:
         metadata = info_to_metadata(info)
         video_path = self._locate(dest, video_id, (".mp4", ".mkv", ".webm"))
         thumb_path = self._locate(dest, video_id, (".jpg", ".png", ".webp"))
+        subtitle_path = self._locate(dest, video_id, (".vtt", ".srt"))
         if video_path is None:
             raise FileNotFoundError(f"yt-dlp reported success but no video file in {dest}")
         logger.info("Downloaded %s -> %s", video_id, video_path.name)
-        return metadata, video_path, thumb_path
+        return DownloadResult(
+            metadata=metadata,
+            video_path=video_path,
+            thumbnail_path=thumb_path,
+            subtitle_path=subtitle_path,
+        )
 
     @staticmethod
     def _locate(directory: Path, stem: str, extensions: tuple[str, ...]) -> Path | None:
