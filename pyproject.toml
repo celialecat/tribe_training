@@ -64,10 +64,12 @@ dev = [
 ]
 
 [project.scripts]
-# Thin console entry points; each maps to a Hydra/Typer-style main().
-ysp-build-dataset = "app.dataset.cli:main"
-ysp-train = "app.training.cli:main"
-ysp-predict = "app.services.predict_cli:main"
+# Thin console entry points; each maps to a Hydra/argparse main().
+ysp-build-dataset = "app.dataset.cli:main"      # download + validate videos
+ysp-compute-brain = "app.tribe.cli:main"         # run TRIBE v2, cache tensors
+ysp-train = "app.training.cli:main"              # train encoder + predictor
+ysp-pipeline = "app.pipeline.cli:main"           # full on-instance orchestration
+ysp-vultr = "app.deploy.cli:main"                # provision + drive remote training
 
 [tool.setuptools.packages.find]
 where = ["backend"]

@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(git add *)",
-      "Bash(git -c 'user.name=YSP Engineering' -c user.email=celialecat@gmail.com commit -q -m 'Phase 1: repo scaffolding, core config/logging, Hydra configs, tooling *)"
+      "Bash(git -c 'user.name=YSP Engineering' -c user.email=celialecat@gmail.com commit -q -m 'Phase 1: repo scaffolding, core config/logging, Hydra configs, tooling *)",
+      "Bash(git -c 'user.name=YSP Engineering' -c user.email=celialecat@gmail.com commit -q -m 'Remote Vultr pipeline: single-command orchestration *)"
     ]
   }
 }
