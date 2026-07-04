@@ -1,0 +1,24 @@
+# Dataset / dataloader configuration.
+db_url: sqlite:///./data/ysp.db
+
+batch_size: 16
+num_workers: 4
+pin_memory: true
+
+# Split fractions (deterministic, seeded by config.seed). Splits are made at the
+# channel level when possible to avoid leakage between train/val/test.
+val_fraction: 0.15
+test_fraction: 0.15
+split_by: channel                  # channel | random
+
+# Temporal handling of brain-activity tensors (Time x Vertices). Sequences are
+# right-padded / centre-cropped to this many TR frames before batching.
+max_time_steps: 256
+pad_value: 0.0
+
+# Target normalisation. Log-space targets are z-scored using train-set stats
+# persisted with the checkpoint so inference de-normalises identically.
+standardize_targets: true
+
+# Metadata features fed alongside the brain latent (see app.dataset.features).
+use_metadata_features: true

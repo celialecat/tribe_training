@@ -1,0 +1,18 @@
+# Official Meta TRIBE v2 inference configuration.
+# These map onto app.tribe.extractor.TribeExtractor and the upstream
+# TribeModel.from_pretrained / get_events_dataframe / predict API.
+model_id: facebook/tribev2
+cache_dir: ./data/cache/tribe
+device: cuda
+
+# Modalities passed to get_events_dataframe. Video is required; audio/text are
+# derived from the same file / transcript when available.
+modalities: [video, audio, text]
+
+# When false (default), brain activity for a video is loaded from BrainCache if
+# present instead of re-running the 1B-parameter model.
+force_recompute: false
+
+# Optional cap on decoded video seconds sent to TRIBE (0 = full video). Long
+# videos are chunked by the extractor regardless; this bounds worst-case cost.
+max_seconds: 0

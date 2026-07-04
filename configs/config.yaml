@@ -1,0 +1,27 @@
+# ==============================================================================
+# Root Hydra config. Composes the data / model / training / tribe groups below.
+# Override anything on the CLI, e.g.:
+#   ysp-train training.epochs=200 model.brain_encoder.n_layers=6 data.batch_size=32
+# Select a packaged experiment with:  ysp-train +experiment=baseline
+# ==============================================================================
+defaults:
+  - data: default
+  - model: default
+  - training: default
+  - tribe: default
+  - _self_
+
+# Global run settings.
+seed: 42
+device: auto                       # auto | cuda | cpu | mps
+run_name: default
+# Hydra writes each run to a timestamped dir; we surface it for the trainer.
+output_dir: ${hydra:runtime.output_dir}
+
+hydra:
+  run:
+    dir: outputs/${run_name}/${now:%Y-%m-%d_%H-%M-%S}
+  sweep:
+    dir: multirun/${run_name}/${now:%Y-%m-%d_%H-%M-%S}
+  job:
+    chdir: false

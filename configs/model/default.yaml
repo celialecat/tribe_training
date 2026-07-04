@@ -1,0 +1,33 @@
+# Neural network architecture: BrainEncoder (T x V -> 512-d) + multitask head.
+# See docs/architecture.md for the design rationale behind each block.
+
+brain_encoder:
+  # Number of cortical vertices in the TRIBE output. The encoder adapts to the
+  # value observed at runtime; this is the nominal fsaverage5 full-mesh size.
+  input_vertices: 20484
+  # Stage 1 — linear vertex compression (learned spatial read-out of the cortex).
+  vertex_proj_dim: 256
+  # Stage 2 — temporal convolution stack to capture haemodynamic dynamics.
+  temporal_channels: [256, 384]
+  temporal_kernel_sizes: [5, 3]
+  # Stage 3 — Transformer encoder over time.
+  d_model: 384
+  n_heads: 6
+  n_layers: 4
+  ff_dim: 1536
+  dropout: 0.1
+  # Stage 4 — pooling to a single latent vector.
+  pool: attention                  # attention | mean | cls
+  latent_dim: 512
+
+predictor:
+  latent_dim: 512
+  # Video metadata features concatenated with the brain latent (channel size,
+  # duration, upload hour, etc.). Must match app.dataset.features.FEATURE_DIM.
+  metadata_dim: 12
+  hidden_dims: [512, 256]
+  dropout: 0.2
+  num_targets: 5                   # matches app.core.constants.NUM_TARGETS
+  # Predict aleatoric uncertainty (per-target log-variance) for calibrated
+  # confidence intervals via a heteroscedastic Gaussian NLL loss.
+  heteroscedastic: true

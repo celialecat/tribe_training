@@ -1,0 +1,43 @@
+# Training-loop hyper-parameters.
+epochs: 100
+lr: 3.0e-4
+weight_decay: 0.01
+optimizer: adamw                   # adamw | adam | sgd
+betas: [0.9, 0.999]
+
+# Learning-rate schedule with linear warmup then cosine decay.
+scheduler: cosine                  # cosine | plateau | none
+warmup_steps: 500
+min_lr: 1.0e-6
+
+# Efficiency / stability.
+grad_accum_steps: 1
+grad_clip_norm: 1.0
+amp: true
+amp_dtype: bf16                    # bf16 | fp16  (bf16 preferred on Ada/Hopper)
+
+# Checkpointing & resume.
+checkpoint_every: 1                # epochs
+keep_last_k: 3
+resume: null                       # path to checkpoint to resume from, or null
+
+# Early stopping.
+early_stopping: true
+early_stopping_metric: val/loss
+early_stopping_mode: min
+early_stopping_patience: 12
+
+# Logging.
+log_every: 20                      # steps
+tensorboard: true
+
+# Distributed. When true the trainer expects to be launched via torchrun.
+ddp: false
+
+# Per-target loss weights (keys must match app.core.constants.Target values).
+target_loss_weights:
+  log_views_7d: 1.0
+  log_views_30d: 1.0
+  engagement: 0.5
+  retention: 0.5
+  virality: 0.5

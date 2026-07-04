@@ -1,0 +1,115 @@
+# ==============================================================================
+# YouTube Success Predictor — Python project definition
+# ==============================================================================
+# The backend is a single installable package (`app`) rooted at ./backend so
+# that `import app.<module>` works identically in dev, tests, Docker and on the
+# Vultr GPU hosts. Heavy / platform-specific dependencies (torch, the official
+# `tribev2` package) are intentionally *not* pinned here — they are installed
+# from the CUDA-matched wheels described in docs/installation.md and docker/.
+# ==============================================================================
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "youtube-success-predictor"
+version = "0.1.0"
+description = "Predict the future success of YouTube videos from TRIBE v2 predicted brain activity."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0 (project code) — see NOTICE for third-party model licenses" }
+authors = [{ name = "YSP Engineering" }]
+keywords = ["youtube", "brain-encoding", "tribe", "fmri", "multimodal", "pytorch"]
+
+# Framework-level dependencies that are pure-python or ship universal wheels.
+# GPU stack (torch/torchvision/torchaudio) + `tribev2` are installed separately.
+dependencies = [
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.3",
+    "hydra-core>=1.3",
+    "omegaconf>=2.3",
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    "yt-dlp>=2024.7.1",
+    "opencv-python-headless>=4.10",
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "scipy>=1.13",
+    "scikit-learn>=1.5",
+    "tensorboard>=2.16",
+    "python-multipart>=0.0.9",
+    "httpx>=0.27",
+    "rich>=13.7",
+    "tqdm>=4.66",
+    "youtube-transcript-api>=0.6.2",
+]
+
+[project.optional-dependencies]
+# Explainability stack — optional because SHAP/captum pull in heavy deps.
+explain = ["shap>=0.45", "captum>=0.7", "matplotlib>=3.9"]
+# ML training/export extras that are not needed for a pure API deployment.
+train = ["onnx>=1.16", "onnxruntime>=1.18"]
+# Developer tooling.
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+    "mypy>=1.10",
+    "types-requests",
+    "httpx>=0.27",
+]
+
+[project.scripts]
+# Thin console entry points; each maps to a Hydra/Typer-style main().
+ysp-build-dataset = "app.dataset.cli:main"
+ysp-train = "app.training.cli:main"
+ysp-predict = "app.services.predict_cli:main"
+
+[tool.setuptools.packages.find]
+where = ["backend"]
+include = ["app*"]
+
+# ------------------------------------------------------------------ Ruff ----
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["backend", "tests"]
+extend-exclude = ["backend/alembic/versions", "frontend"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
+ignore = ["B008"]  # FastAPI Depends() in defaults is idiomatic.
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["N802", "N803"]
+"__init__.py" = ["F401"]
+
+# ------------------------------------------------------------------ Mypy ----
+[tool.mypy]
+python_version = "3.11"
+warn_unused_configs = true
+warn_redundant_casts = true
+disallow_untyped_defs = true
+ignore_missing_imports = true       # torch/tribev2/shap ship partial stubs.
+plugins = ["pydantic.mypy"]
+exclude = ["backend/alembic/", "build/"]
+
+# ---------------------------------------------------------------- Pytest ----
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-ra --strict-markers --cov=app --cov-report=term-missing"
+markers = [
+    "gpu: requires a CUDA-capable GPU",
+    "tribe: requires the official tribev2 weights to be available",
+    "integration: end-to-end test spanning multiple components",
+]
+
+[tool.coverage.run]
+source = ["backend/app"]
+omit = ["backend/app/**/cli.py", "backend/alembic/*"]

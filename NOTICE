@@ -1,0 +1,20 @@
+YouTube Success Predictor
+=========================
+
+This repository's own source code is released under the Apache License 2.0.
+
+Third-party components carry their own licenses, which govern their use:
+
+  - Meta TRIBE v2 (model code + weights `facebook/tribev2`)
+    License: CC-BY-NC-4.0 (Creative Commons Attribution-NonCommercial 4.0).
+    Source:  https://github.com/facebookresearch/tribev2
+    NOTE: The NonCommercial clause means predictions produced with TRIBE v2
+    weights, and any downstream models trained on TRIBE-derived brain activity,
+    may NOT be used for commercial purposes. This project integrates — and does
+    not modify or redistribute — the official weights.
+
+  - PyTorch, FastAPI, and other dependencies retain their respective licenses
+    as declared in their distributions.
+
+By downloading the TRIBE v2 weights through this software you agree to the
+upstream model license.
