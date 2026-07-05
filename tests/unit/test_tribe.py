@@ -32,7 +32,13 @@ class _FakeTribeModel:
         self.n_t, self.n_v = n_t, n_v
 
     @classmethod
-    def from_pretrained(cls, model_id: str, cache_folder: str):
+    def from_pretrained(
+        cls,
+        model_id: str,
+        cache_folder: str,
+        device: str = "auto",
+        config_update: dict | None = None,
+    ):
         return cls()
 
     def get_events_dataframe(self, **kwargs):
