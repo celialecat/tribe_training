@@ -8,6 +8,7 @@ a :class:`VideoMetadata`.
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -86,6 +87,11 @@ class YouTubeDownloader:
         self._ydl_factory = ydl_factory  # for tests; None -> real yt_dlp
 
     def _ydl(self, options: dict[str, Any]):
+        # YouTube bot-checks datacenter IPs; a browser-exported cookies.txt
+        # (Netscape format) set via YSP_YTDLP_COOKIES authenticates requests.
+        cookie_file = os.environ.get("YSP_YTDLP_COOKIES")
+        if cookie_file and Path(cookie_file).is_file():
+            options = {**options, "cookiefile": cookie_file}
         if self._ydl_factory is not None:
             return self._ydl_factory(options)
         import yt_dlp
