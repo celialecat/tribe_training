@@ -92,6 +92,9 @@ class YouTubeDownloader:
         cookie_file = os.environ.get("YSP_YTDLP_COOKIES")
         if cookie_file and Path(cookie_file).is_file():
             options = {**options, "cookiefile": cookie_file}
+        # Allow fetching yt-dlp's JS challenge solver (needed for full format
+        # extraction on hosts without a preinstalled solver distribution).
+        options = {**options, "remote_components": ["ejs:github"]}
         if self._ydl_factory is not None:
             return self._ydl_factory(options)
         import yt_dlp
