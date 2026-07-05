@@ -92,8 +92,21 @@ class TribeExtractor:
                 "Loading TRIBE v2 weights %s onto %s (cache=%s)",
                 self.model_id, self.device, self.cache_folder,
             )
+            # The published config pins every feature extractor to CUDA; on a
+            # CPU host they must be overridden or model loading fails.
+            config_update = None
+            if not self.device.startswith("cuda"):
+                config_update = {
+                    "data.text_feature.device": self.device,
+                    "data.audio_feature.device": self.device,
+                    "data.image_feature.image.device": self.device,
+                    "data.video_feature.image.device": self.device,
+                }
             model = TribeModel.from_pretrained(
-                self.model_id, cache_folder=str(self.cache_folder)
+                self.model_id,
+                cache_folder=str(self.cache_folder),
+                device=self.device,
+                config_update=config_update,
             )
             # Best-effort device placement; upstream may already handle this.
             for mover in ("to", "cuda"):
