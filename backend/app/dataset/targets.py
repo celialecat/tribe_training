@@ -7,6 +7,8 @@ public snapshot, and the training loss must ignore them rather than fit noise.
 
 Observability by target
 ------------------------
+- ``log_likes``           : directly observable = log10(1 + like_count). The
+                            primary target; masked only when likes are hidden.
 - ``engagement``          : directly observable = (likes + comments) / views.
 - ``log_views_7d/30d``    : require the view count *at* 7 and 30 days post-upload.
                             Only exact when longitudinal snapshots exist. For a
@@ -99,6 +101,11 @@ def compute_targets(
 
     views = video.view_count
     age = _video_age_days(video, now=now)
+
+    # ---- log-likes (primary target, directly observable) ----
+    if video.like_count is not None:
+        values[index[Target.log_likes]] = math.log10(1.0 + max(float(video.like_count), 0.0))
+        mask[index[Target.log_likes]] = 1.0
 
     # ---- engagement (directly observable) ----
     if views and views > 0:

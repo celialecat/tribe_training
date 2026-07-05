@@ -7,9 +7,10 @@ from app.core.device import resolve_device
 
 
 def test_target_order_is_canonical_and_unique() -> None:
-    assert NUM_TARGETS == len(TARGET_ORDER) == 5
+    assert NUM_TARGETS == len(TARGET_ORDER) == 6
     assert len(set(TARGET_ORDER)) == NUM_TARGETS
     assert TARGET_ORDER[0] is Target.log_views_7d
+    assert Target.log_likes in TARGET_ORDER
 
 
 def test_settings_resolves_relative_paths(tmp_settings: object) -> None:

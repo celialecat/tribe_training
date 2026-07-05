@@ -14,6 +14,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
+from app.core.constants import NUM_TARGETS
 from app.db.models.enums import VideoStatus
 from app.db.models.video import Video
 from app.models import MaskedMultitaskLoss, build_model
@@ -71,7 +72,7 @@ def _small_model_cfg(n_vertices: int) -> dict:
         },
         "predictor": {
             "latent_dim": 48, "metadata_dim": 12, "hidden_dims": [48, 24],
-            "dropout": 0.1, "num_targets": 5, "heteroscedastic": True,
+            "dropout": 0.1, "num_targets": NUM_TARGETS, "heteroscedastic": True,
         },
     }
 
@@ -141,7 +142,30 @@ def test_full_training_loop_checkpoints_resumes_and_exports(db_session, tmp_path
     meta = torch.randn(2, 12)
     pad = torch.zeros(2, 32, dtype=torch.bool)
     mean, _log_var = loaded(brain, meta, pad)
-    assert mean.shape == (2, 5)
+    assert mean.shape == (2, NUM_TARGETS)
+
+
+def test_resolve_resume_auto_finds_latest_sibling_checkpoint(tmp_path) -> None:
+    from app.training.cli import _resolve_resume
+
+    base = tmp_path / "outputs" / "run"
+    current = base / "2026-01-02_00-00-00"
+    current.mkdir(parents=True)
+
+    assert _resolve_resume(None, current) is None
+    assert _resolve_resume("auto", current) is None  # nothing to resume yet
+    assert _resolve_resume("/x/last.pt", current) == Path("/x/last.pt")
+
+    older = base / "2026-01-01_00-00-00" / "checkpoints"
+    older.mkdir(parents=True)
+    (older / "last.pt").write_bytes(b"ckpt")
+    assert _resolve_resume("auto", current) == older / "last.pt"
+
+    # The current run's own (future) checkpoint dir is never a resume source.
+    own = current / "checkpoints"
+    own.mkdir()
+    (own / "last.pt").write_bytes(b"ckpt")
+    assert _resolve_resume("auto", current) == older / "last.pt"
 
 
 def test_early_stopping_triggers() -> None:

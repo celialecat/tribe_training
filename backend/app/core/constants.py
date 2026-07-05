@@ -38,6 +38,7 @@ class Target(StrEnum):
     engagement = "engagement"           # (likes + comments) / views, in [0, 1]
     retention = "retention"             # mean fractional watch time, in [0, 1]
     virality = "virality"               # views growth ratio 30d/7d, normalised
+    log_likes = "log_likes"             # log10(1 + likes) — the primary target
 
 
 # Canonical ordering used everywhere a target vector is built.
@@ -47,8 +48,12 @@ TARGET_ORDER: tuple[Target, ...] = (
     Target.engagement,
     Target.retention,
     Target.virality,
+    Target.log_likes,
 )
 NUM_TARGETS = len(TARGET_ORDER)
+
+# The primary supervision signal for the success predictor.
+PRIMARY_TARGET: Target = Target.log_likes
 
 # Targets that live in [0, 1] and are therefore modelled through a sigmoid and
 # scored with a bounded loss; the remainder are unbounded log-space regressions.

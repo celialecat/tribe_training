@@ -74,6 +74,16 @@ def test_targets_engagement_observed_views_masked_by_default() -> None:
     assert d[Target.log_views_7d][1] == 0.0
     # Retention never inferred.
     assert d[Target.retention][1] == 0.0
+    # log-likes (primary target) observed = log10(1 + 100).
+    assert d[Target.log_likes][1] == 1.0
+    assert d[Target.log_likes][0] == pytest.approx(np.log10(101.0))
+
+
+def test_targets_log_likes_masked_when_likes_hidden() -> None:
+    video = Video(view_count=1000, like_count=None, comment_count=50)
+    sample = compute_targets(video)
+    d = {t: (sample.values[i], sample.mask[i]) for i, t in enumerate(TARGET_ORDER)}
+    assert d[Target.log_likes][1] == 0.0
 
 
 def test_targets_approximate_curve_fills_all_view_targets() -> None:

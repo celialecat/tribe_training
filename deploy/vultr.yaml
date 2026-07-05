@@ -30,6 +30,7 @@ dataset_source: ""                # a video / playlist / channel URL to ingest
 dataset_limit: null               # cap number of videos (null = all)
 train_overrides:                  # Hydra overrides forwarded to ysp-train
   - training.epochs=100
+  - training.resume=auto          # pick up the latest checkpoint after interruptions
 pipeline_skip: []                 # e.g. ["download"] to reuse an existing dataset
 
 # ---- Lifecycle ----

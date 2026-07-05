@@ -19,7 +19,8 @@ amp_dtype: bf16                    # bf16 | fp16  (bf16 preferred on Ada/Hopper)
 # Checkpointing & resume.
 checkpoint_every: 1                # epochs
 keep_last_k: 3
-resume: null                       # path to checkpoint to resume from, or null
+resume: null                       # checkpoint path, "auto" (latest for this
+                                   # run_name, if any), or null
 
 # Early stopping.
 early_stopping: true
@@ -36,6 +37,7 @@ ddp: false
 
 # Per-target loss weights (keys must match app.core.constants.Target values).
 target_loss_weights:
+  log_likes: 2.0                   # primary target: log10(1 + likes)
   log_views_7d: 1.0
   log_views_30d: 1.0
   engagement: 0.5

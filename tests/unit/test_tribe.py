@@ -12,6 +12,7 @@ from datetime import UTC, datetime, timedelta
 import numpy as np
 import pytest
 
+from app.core.constants import NUM_TARGETS
 from app.db.models.enums import BrainStatus, VideoStatus
 from app.db.models.video import Video
 from app.tribe.extractor import TribeExtractor, TribeNotInstalled
@@ -195,5 +196,5 @@ def test_brain_dataset_getitem_shapes(db_session) -> None:
     assert item["pad_mask"].shape == (64,)
     assert bool(item["pad_mask"][40]) is True     # padding region flagged
     assert item["features"].shape == (12,)
-    assert item["targets"].shape == (5,)
-    assert item["target_mask"].shape == (5,)
+    assert item["targets"].shape == (NUM_TARGETS,)
+    assert item["target_mask"].shape == (NUM_TARGETS,)

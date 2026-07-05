@@ -87,7 +87,8 @@ def test_masked_loss_ignores_masked_targets() -> None:
 
 def test_loss_reduces_to_mse_when_homoscedastic() -> None:
     loss_fn = MaskedMultitaskLoss(heteroscedastic=False)
-    mean = torch.tensor([[2.0, 0.0, 0.0, 0.0, 0.0]])
+    mean = torch.zeros(1, NUM_TARGETS)
+    mean[0, 0] = 2.0
     target = torch.zeros(1, NUM_TARGETS)
     mask = torch.zeros(1, NUM_TARGETS)
     mask[0, 0] = 1.0
