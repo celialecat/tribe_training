@@ -10,7 +10,7 @@
 
 # ---- Infrastructure ----
 region: ewr                       # Vultr region code (ewr=New Jersey, lax, ...)
-plan: "vhf-16c-58gb"              # CPU fallback while the account awaits Cloud GPU
+plan: "vhp-12c-24gb-amd"              # CPU fallback while the account awaits Cloud GPU
                                   # access; switch back to a `vcg-*` plan (>=24 GB
                                   # VRAM for ~1B-param TRIBE v2) once granted.
 os_label: "Ubuntu 24.04 LTS x64"
