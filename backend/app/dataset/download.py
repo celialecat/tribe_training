@@ -140,7 +140,12 @@ class YouTubeDownloader:
             if not entry:
                 continue
             if entry.get("url") and entry.get("ie_key") == "Youtube":
-                urls.append(f"https://www.youtube.com/watch?v={entry['url']}")
+                # Flat extraction yields either a bare video id or a full URL.
+                ref = entry["url"]
+                if ref.startswith(("http://", "https://")):
+                    urls.append(ref)
+                else:
+                    urls.append(f"https://www.youtube.com/watch?v={ref}")
             elif entry.get("id"):
                 urls.append(f"https://www.youtube.com/watch?v={entry['id']}")
             elif entry.get("webpage_url"):
