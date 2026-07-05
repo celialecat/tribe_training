@@ -181,7 +181,13 @@ class YouTubeDownloader:
             "outtmpl": str(dest / "%(id)s.%(ext)s"),
             # Prefer an H.264/AAC MP4 <=720p: plenty for TRIBE's visual encoder
             # and dramatically cheaper to download and decode.
-            "format": "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]/best",
+            # H.264 (avc1) first: universally decodable (OpenCV/ffmpeg); AV1/VP9
+            # streams fail OpenCV frame decoding on typical pip builds.
+            "format": (
+                "bestvideo[height<=720][vcodec^=avc1]+bestaudio[ext=m4a]/"
+                "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/"
+                "best[height<=720]/best"
+            ),
             "merge_output_format": "mp4",
             # Resumable downloads + skip already-complete files.
             "continuedl": True,
