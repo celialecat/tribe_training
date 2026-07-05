@@ -58,7 +58,7 @@ def _make_engine(url: str):
     connect_args = {}
     if url.startswith("sqlite"):
         # Allow cross-thread use (FastAPI threadpool) and reasonable timeouts.
-        connect_args = {"check_same_thread": False, "timeout": 30}
+        connect_args = {"check_same_thread": False, "timeout": 120}
     engine = create_engine(url, future=True, connect_args=connect_args, pool_pre_ping=True)
     if url.startswith("sqlite"):
         _enable_sqlite_pragmas(engine)
