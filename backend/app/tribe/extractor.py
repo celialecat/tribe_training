@@ -17,7 +17,6 @@ never silently substitute fake activity.
 
 from __future__ import annotations
 
-import tempfile
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -132,23 +131,10 @@ class TribeExtractor:
         if not video_path.exists():
             raise FileNotFoundError(video_path)
 
-        kwargs: dict[str, Any] = {"video_path": str(video_path)}
-        if audio_path is not None and "audio" in self.modalities:
-            kwargs["audio_path"] = str(audio_path)
-
-        text_tmp: Path | None = None
-        if transcript and "text" in self.modalities:
-            # The upstream API accepts a text *path*; materialise the transcript.
-            text_tmp = Path(tempfile.mkstemp(suffix=".txt")[1])
-            text_tmp.write_text(transcript, encoding="utf-8")
-            kwargs["text_path"] = str(text_tmp)
-
-        try:
-            events = self.model.get_events_dataframe(**kwargs)
-            preds, _segments = self.model.predict(events=events)
-        finally:
-            if text_tmp is not None:
-                text_tmp.unlink(missing_ok=True)
+        # Upstream accepts exactly ONE source; a video is trimodal on its own
+        # (audio and text events are derived from it internally).
+        events = self.model.get_events_dataframe(video_path=str(video_path))
+        preds, _segments = self.model.predict(events=events)
 
         array = self._to_numpy(preds)
         if array.ndim != 2:
