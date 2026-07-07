@@ -18,6 +18,8 @@ class VideoMetadata:
 
     youtube_id: str | None = None
     url: str | None = None
+    language: str | None = None
+    categories: list[str] | None = None
     title: str | None = None
     description: str | None = None
     channel: str | None = None
