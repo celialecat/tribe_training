@@ -10,8 +10,9 @@
 
 # ---- Infrastructure ----
 region: ewr                       # Vultr region code (ewr=New Jersey, lax, ...)
-plan: ""                          # GPU plan id from `ysp-vultr plans` (REQUIRED).
-                                  # TRIBE v2 is ~1B params — choose >= 24 GB VRAM.
+plan: "vhp-12c-24gb-amd"              # CPU fallback while the account awaits Cloud GPU
+                                  # access; switch back to a `vcg-*` plan (>=24 GB
+                                  # VRAM for ~1B-param TRIBE v2) once granted.
 os_label: "Ubuntu 24.04 LTS x64"
 block_size_gb: 100                # persistent storage for videos + tensors + ckpts
 label: ysp-train                  # names the instance AND the block volume
@@ -19,17 +20,18 @@ ssh_key_path: ~/.ssh/id_ed25519.pub
 ssh_user: root
 
 # ---- Source: Mac -> GitHub -> Vultr ----
-repo_url: ""                      # e.g. https://github.com/<you>/youtube-success-predictor (REQUIRED)
-branch: main
+repo_url: "https://github.com/celialecat/tribe_training"                      # e.g. https://github.com/<you>/youtube-success-predictor (REQUIRED)
+branch: devin/1783242702-log-likes-auto-resume
 
 # ---- Persistent storage mount on the instance ----
 mount_point: /mnt/ysp-data
 
 # ---- Pipeline inputs ----
-dataset_source: ""                # a video / playlist / channel URL to ingest
-dataset_limit: null               # cap number of videos (null = all)
+dataset_source: "https://www.youtube.com/@TEDEd/videos"  # a video / playlist / channel URL to ingest
+dataset_limit: 100                # cap number of videos (null = all)
 train_overrides:                  # Hydra overrides forwarded to ysp-train
   - training.epochs=100
+  - training.resume=auto          # pick up the latest checkpoint after interruptions
 pipeline_skip: []                 # e.g. ["download"] to reuse an existing dataset
 
 # ---- Lifecycle ----

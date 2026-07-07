@@ -129,13 +129,39 @@ def main(cfg: DictConfig) -> None:
             full_config=full_config,
             callbacks=tracker,
         )
-        if cfg.training.get("resume"):
-            trainer.resume(str(cfg.training.resume))
+        resume_path = _resolve_resume(cfg.training.get("resume"), run_dir)
+        if resume_path is not None:
+            trainer.resume(resume_path)
 
         trainer.fit(bundle.train_loader, bundle.val_loader, train_sampler=bundle.train_sampler)
 
         if dist.is_main:
             _finalise(session, trainer, bundle, cfg, run_dir, experiment_id)
+
+
+def _resolve_resume(resume: object, run_dir: Path) -> Path | None:
+    """Resolve the ``training.resume`` setting to a checkpoint path.
+
+    ``"auto"`` finds the most recent ``last.pt`` written by any previous run of
+    the same ``run_name`` (Hydra run dirs are timestamped siblings of
+    ``run_dir``), so an interrupted job restarted with the same command picks up
+    where it left off. Returns None when there is nothing to resume from.
+    """
+    if not resume:
+        return None
+    if str(resume) != "auto":
+        return Path(str(resume))
+    candidates = [
+        ckpt
+        for ckpt in run_dir.parent.glob("*/checkpoints/last.pt")
+        if ckpt.is_file() and run_dir not in ckpt.parents
+    ]
+    if not candidates:
+        logger.info("resume=auto: no previous checkpoint found under %s", run_dir.parent)
+        return None
+    latest = max(candidates, key=lambda p: p.stat().st_mtime)
+    logger.info("resume=auto: resuming from %s", latest)
+    return latest
 
 
 def _finalise(session, trainer, bundle, cfg, run_dir: Path, experiment_id: int | None) -> None:

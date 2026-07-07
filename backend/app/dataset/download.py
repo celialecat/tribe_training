@@ -8,6 +8,7 @@ a :class:`VideoMetadata`.
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -62,6 +63,8 @@ def info_to_metadata(info: dict[str, Any]) -> VideoMetadata:
     return VideoMetadata(
         youtube_id=info.get("id"),
         url=info.get("webpage_url") or info.get("original_url"),
+        language=info.get("language"),
+        categories=list(info.get("categories") or []) or None,
         title=info.get("title"),
         description=info.get("description"),
         channel=info.get("channel") or info.get("uploader"),
@@ -86,6 +89,14 @@ class YouTubeDownloader:
         self._ydl_factory = ydl_factory  # for tests; None -> real yt_dlp
 
     def _ydl(self, options: dict[str, Any]):
+        # YouTube bot-checks datacenter IPs; a browser-exported cookies.txt
+        # (Netscape format) set via YSP_YTDLP_COOKIES authenticates requests.
+        cookie_file = os.environ.get("YSP_YTDLP_COOKIES")
+        if cookie_file and Path(cookie_file).is_file():
+            options = {**options, "cookiefile": cookie_file}
+        # Allow fetching yt-dlp's JS challenge solver (needed for full format
+        # extraction on hosts without a preinstalled solver distribution).
+        options = {**options, "remote_components": ["ejs:github"]}
         if self._ydl_factory is not None:
             return self._ydl_factory(options)
         import yt_dlp
@@ -140,7 +151,12 @@ class YouTubeDownloader:
             if not entry:
                 continue
             if entry.get("url") and entry.get("ie_key") == "Youtube":
-                urls.append(f"https://www.youtube.com/watch?v={entry['url']}")
+                # Flat extraction yields either a bare video id or a full URL.
+                ref = entry["url"]
+                if ref.startswith(("http://", "https://")):
+                    urls.append(ref)
+                else:
+                    urls.append(f"https://www.youtube.com/watch?v={ref}")
             elif entry.get("id"):
                 urls.append(f"https://www.youtube.com/watch?v={entry['id']}")
             elif entry.get("webpage_url"):
@@ -167,7 +183,13 @@ class YouTubeDownloader:
             "outtmpl": str(dest / "%(id)s.%(ext)s"),
             # Prefer an H.264/AAC MP4 <=720p: plenty for TRIBE's visual encoder
             # and dramatically cheaper to download and decode.
-            "format": "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720]/best",
+            # H.264 (avc1) first: universally decodable (OpenCV/ffmpeg); AV1/VP9
+            # streams fail OpenCV frame decoding on typical pip builds.
+            "format": (
+                "bestvideo[height<=720][vcodec^=avc1]+bestaudio[ext=m4a]/"
+                "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/"
+                "best[height<=720]/best"
+            ),
             "merge_output_format": "mp4",
             # Resumable downloads + skip already-complete files.
             "continuedl": True,

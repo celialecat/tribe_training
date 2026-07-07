@@ -15,6 +15,7 @@ defaults:
 seed: 42
 device: auto                       # auto | cuda | cpu | mps
 run_name: default
+prediction_horizon_days: 30
 # Hydra writes each run to a timestamped dir; we surface it for the trainer.
 output_dir: ${hydra:runtime.output_dir}
 

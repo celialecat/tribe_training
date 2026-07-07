@@ -1,0 +1,20 @@
+diverse:
+  hint: "Mixed-source channels covering a broad topical spread."
+  channels:
+    - https://www.youtube.com/@veritasium
+    - https://www.youtube.com/@Numberphile
+shorts:
+  hint: "Short-form / high-retention content."
+  channels:
+    - https://www.youtube.com/@Kurzgesagt
+    - https://www.youtube.com/@Computerphile
+education:
+  hint: "Educational channels and lecture-style content."
+  channels:
+    - https://www.youtube.com/@TEDEd
+    - https://www.youtube.com/@Kurzgesagt
+    - https://www.youtube.com/@veritasium
+    - https://www.youtube.com/@3blue1brown
+    - https://www.youtube.com/@numberphile
+    - https://www.youtube.com/@Computerphile
+    - https://www.youtube.com/@mitocw

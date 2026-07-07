@@ -27,7 +27,7 @@ predictor:
   metadata_dim: 12
   hidden_dims: [512, 256]
   dropout: 0.2
-  num_targets: 5                   # matches app.core.constants.NUM_TARGETS
+  num_targets: 6                   # matches app.core.constants.NUM_TARGETS
   # Predict aleatoric uncertainty (per-target log-variance) for calibrated
   # confidence intervals via a heteroscedastic Gaussian NLL loss.
   heteroscedastic: true

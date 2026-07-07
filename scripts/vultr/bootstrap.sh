@@ -31,9 +31,11 @@ apt-get install -y --no-install-recommends \
 echo "==[bootstrap]== GPU check"
 if command -v nvidia-smi >/dev/null 2>&1; then
     nvidia-smi || true
+    DEVICE=cuda
 else
-    echo "WARNING: nvidia-smi not found. Use a Vultr GPU image with NVIDIA drivers," \
-         "or install the CUDA driver before running TRIBE/training." >&2
+    echo "WARNING: nvidia-smi not found — falling back to CPU execution" \
+         "(TRIBE inference and training will run on CPU)." >&2
+    DEVICE=cpu
 fi
 
 echo "==[bootstrap]== repository"
@@ -53,10 +55,16 @@ fi
 source "${VENV}/bin/activate"
 pip install --upgrade pip wheel
 
-echo "==[bootstrap]== project + CUDA torch stack"
+echo "==[bootstrap]== project + torch stack (${DEVICE})"
 pip install -e "${CODE_DIR}"
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-pip install -r "${CODE_DIR}/requirements-gpu.txt"
+if [ "${DEVICE}" = "cuda" ]; then
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+    pip install -r "${CODE_DIR}/requirements-gpu.txt"
+else
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+    # requirements-gpu.txt pins onnxruntime-gpu; install the CPU equivalents.
+    pip install shap captum onnx onnxruntime matplotlib huggingface-hub
+fi
 
 echo "==[bootstrap]== official TRIBE v2"
 bash "${CODE_DIR}/scripts/install_tribe.sh"
@@ -72,8 +80,8 @@ export YSP_CACHE_DIR=${MOUNT_POINT}/cache
 export YSP_MODELS_DIR=${MOUNT_POINT}/models
 export YSP_DATABASE_URL=sqlite:///${MOUNT_POINT}/ysp.db
 export TRIBE_CACHE_DIR=${MOUNT_POINT}/cache/tribe
-export TRIBE_DEVICE=cuda
-export YSP_DEVICE=cuda
+export TRIBE_DEVICE=${DEVICE}
+export YSP_DEVICE=${DEVICE}
 export YSP_CODE_DIR=${CODE_DIR}
 export YSP_VENV=${VENV}
 EOF
