@@ -45,14 +45,14 @@ async def predict_upload(file: UploadFile = File(...)) -> dict:
     return {"job_id": job_id}
 
 
+@router.get("/horizon")
+def horizon() -> PredictionHorizonResponse:
+    return PredictionHorizonResponse(horizon_days=30)
+
+
 @router.get("/{job_id}")
 def get_job(job_id: str) -> dict:
     job = jobs.get(job_id)
     if job is None:
         return {}
     return job.snapshot()
-
-
-@router.get("/horizon")
-def horizon() -> PredictionHorizonResponse:
-    return PredictionHorizonResponse(horizon_days=30)
