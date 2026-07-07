@@ -63,6 +63,8 @@ def info_to_metadata(info: dict[str, Any]) -> VideoMetadata:
     return VideoMetadata(
         youtube_id=info.get("id"),
         url=info.get("webpage_url") or info.get("original_url"),
+        language=info.get("language"),
+        categories=list(info.get("categories") or []) or None,
         title=info.get("title"),
         description=info.get("description"),
         channel=info.get("channel") or info.get("uploader"),
